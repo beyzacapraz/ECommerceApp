@@ -1,2 +1,4 @@
-pip install flask
-pip install flask pymongo flask-cors python-dotenv
+Flask==2.0.1
+flask-cors==3.1.1
+pymongo==3.11.4
+python-dotenv==0.19.2  # if you're using .env files for MongoDB URI

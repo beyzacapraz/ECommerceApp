@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface Product {
   name: string;
@@ -18,7 +19,12 @@ export default function Home() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Products</h1>
+      <h1 className="text-2xl font-bold mb-4">Home</h1>
+      <Link href="/login">
+        <button className="bg-blue-500 text-white px-4 py-2 rounded">
+          Go to Login
+        </button>
+      </Link>
       <ul className="grid grid-cols-3 gap-4">
         {products.map((product) => (
           <li key={product.name} className="border p-4 rounded-lg">

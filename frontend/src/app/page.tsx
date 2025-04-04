@@ -1,18 +1,17 @@
-"use client"; // Required for hooks like useState/useEffect
+"use client";
 
 import { useEffect, useState } from "react";
 
 interface Product {
   name: string;
   price: number;
-  // Add other fields as needed
 }
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/products")
+    fetch("http://localhost:5000/home")
       .then((res) => res.json())
       .then((data) => setProducts(data));
   }, []);

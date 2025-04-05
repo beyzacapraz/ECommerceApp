@@ -22,27 +22,19 @@ interface ProductDetails {
 
 export default function ProductDetailsPage() {
   const [product, setProduct] = useState<ProductDetails | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const params = useParams();
   const router = useRouter();
   const productId = params.productId as string;
 
   useEffect(() => {
     const fetchProduct = async () => {
-      try {
-        const response = await fetch(`http://localhost:5000/products/${productId}`);
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-        const data = await response.json();
-        setProduct(data);
-      } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
-      }
+    const response = await fetch(`http://localhost:5000/products/${productId}`);
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+    const data = await response.json();
+    setProduct(data);
+
     };
 
     if (productId) {
@@ -50,8 +42,6 @@ export default function ProductDetailsPage() {
     }
   }, [productId]);
 
-  if (loading) return <div className="text-center mt-10 text-lg">Loading...</div>;
-  if (error) return <div className="text-center text-red-500 mt-10">Error: {error}</div>;
   if (!product) return <div className="text-center mt-10">No product found.</div>;
 
   return (

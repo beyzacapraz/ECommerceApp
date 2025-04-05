@@ -118,33 +118,18 @@ export default function Home() {
       </div>
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-black">Filter by Category</h2>
-        <div className="flex flex-wrap gap-2">
-           <button
-              key="all"
-              className={`px-4 py-2 rounded-lg transition duration-300 ${
-                selectedCategory === "all"
-                  ? "bg-[#50c878] text-black"
-                  : "bg-[#c3e5ae] text-gray-800"
-              }`}
-              onClick={() => handleCategoryChange("all")}
-            >
-              All Products
-            </button>
-
-            {categories.map((category) => (
-              <button
-                key={category._id}
-                className={`px-4 py-2 rounded-lg transition duration-300 ${
-                  selectedCategory === category._id
-                    ? "bg-[#50c878] text-black"
-                    : "bg-[#c3e5ae] text-gray-800"
-                }`}
-                onClick={() => handleCategoryChange(category._id)}
-              >
-                {category.name}
-              </button>
-            ))}
-        </div>
+        <select
+          value={selectedCategory}
+          onChange={(e) => handleCategoryChange(e.target.value)}
+          className="w-full md:w-64 px-4 py-2 rounded-lg bg-[#c3e5ae] text-black focus:outline-none focus:ring-2 focus:ring-[#50c878] transition"
+        >
+          <option value="all">All Products</option>
+          {categories.map((category) => (
+            <option key={category._id} value={category._id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-10">
         {filteredProducts.map((product) => (

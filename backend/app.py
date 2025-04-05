@@ -57,6 +57,7 @@ def get_products():
         
     return jsonify(products)
 
+
 @app.route("/categories", methods=["GET"])
 def get_categories():
     categories_cursor = db.categories.find()
@@ -115,6 +116,48 @@ def get_user(token):
           })
       else:
           return jsonify({"error": "User not found"}), 404
+      
 
+@app.route("/products/<product_id>", methods=["GET"])
+def get_product_details(product_id):
+    try:
+        product = db.products.find_one({"_id": ObjectId(product_id)})
+        if not product:
+            return jsonify({"error": "Product not found"}), 404
+        
+        category_id = product.get("category_id")
+        category_name = "Uncategorized"
+        if category_id:
+            category = db.categories.find_one({"_id": ObjectId(category_id)})
+            if category:
+                category_name = category.get("name", "Uncategorized")
+        
+        product_details = {
+            "_id": str(product["_id"]),
+            "name": product.get("name", "Unnamed Product"),
+            "price": product.get("price", 0),
+            "description": product.get("description", ""),
+            "image": product.get("image", ""),
+            "seller": product.get("seller", "Unknown"),
+            "rating": product.get("rating", 0),
+            "category_name": category_name,
+            "reviews": product.get("reviews", []),
+            "rating": product.get("rating", 0)
+        }
+        
+        if category_name == "GPS Sport Watches":
+            product_details["battery_life"] = product.get("battery_life", "")
+        elif category_name in ["Antique Furniture", "Vinyls"]:
+            product_details["age"] = product.get("age", "")
+        if category_name == "Running Shoes":
+            product_details["size"] = product.get("size", "")
+            product_details["material"] = product.get("material", "")
+        elif category_name == "Antique Furniture":
+            product_details["material"] = product.get("material", "")
+            
+        return jsonify(product_details)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 if __name__ == "__main__":
     app.run(debug=True)

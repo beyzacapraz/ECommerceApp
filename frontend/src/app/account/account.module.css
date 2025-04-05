@@ -4,17 +4,25 @@
   justify-content: center;
   height: 100vh;
   background-color: #fcf8e8;
+
 }
 
-.form {
-  color: black;
-  background: #f4bbbb;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
+.details_card {
+  backdrop-filter: blur(10px);
+  background-color:#f4bbbb;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
+
 .close_button {
-  background-color: #1e293b;
+  background-color: #1e1e1e;
   color: #fff;
   border: none;
   font-size: 1.5rem;
@@ -24,36 +32,29 @@
   right: 1rem;
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 50%;
+  border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  opacity: 0.9;
+  opacity: 0.8;
   transition: all 0.2s ease-in-out;
 }
 
 .close_button:hover {
-  background-color: #e11d48;
+  background-color: #ff4d4d;
   transform: scale(1.1);
   opacity: 1;
 }
 
-.input {
-  color: black;
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #000000;
-  border-radius: 5px;
+.details_grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
 }
 
-.button {
-  width: 100%;
-  background: #50c878;
-  color: rgb(0, 0, 0);
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+@media (min-width: 640px) {
+  .details_grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }

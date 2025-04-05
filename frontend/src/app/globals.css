@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background-color: #cfd7db;
+
   --foreground: #171717;
 }
 
@@ -14,30 +15,13 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background-color: #fcf8e8;
     --foreground: #ededed;
   }
 }
 
 body {
-  background: var(--background);
+  background-color: #fcf8e8;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-}
-.details-button-logged-in {
-  background: rgb(88, 144, 190);
-  color: white;
-}
-.details-button-logged-in:hover {
-  background: rgb(68, 124, 170);
-}
-
-.details-button-logged-out {
-  background: rgb(210, 210, 210);
-  color: rgb(221, 213, 213);
-  cursor: not-allowed;
-}
-.details-button-logged-out:hover {
-  background: rgba(255, 255, 255, 0.349);
-
 }

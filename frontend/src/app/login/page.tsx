@@ -37,9 +37,9 @@ export default function LoginPage() {
   return (
     <div className={styles.container}>
       <form onSubmit={handleSubmit} className={styles.form}>
-        <h2 className="text-xl font-bold mb-4">Login</h2>
-
-        <input 
+         <button className={styles.close_button} onClick={() => router.push('/')}>×</button>
+        <h2 className="text-xl font-bold mb-4 text-black">Login</h2>
+        <input
           className={styles.input}
           type="text"
           placeholder="Username"

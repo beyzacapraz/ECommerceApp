@@ -36,7 +36,7 @@ def get_products():
             "name": product.get("name", "Unnamed Product"),
             "price": product.get("price", 0),
             "description": product.get("description", ""),
-            "imageUrl": product.get("image", ""),
+            "image": product.get("image", ""),
             "seller": product.get("seller", "Unknown"),
             "rating": product.get("rating", 0),
             "category_id": category_id,
@@ -69,6 +69,52 @@ def get_categories():
         })
         
     return jsonify(categories)
+
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.json
+    email = data.get("email")
+    password = data.get("password")
+    username = data.get("username", "")
+    is_admin = data.get("is_admin", False)
+
+    if not email or not password:
+        return jsonify({"error": "Email and password required"}), 400
+
+    user = db.user.find_one({"email": email})
+
+    if user:
+        if user["password"] != password:
+            return jsonify({"error": "Incorrect password"}), 401
+        return jsonify({"message": "Login successful", "token": str(user["_id"])})
+    else:
+        new_user = {
+            "username": username,
+            "email": email,
+            "password": password,
+            "rating": 0,
+            "reviews": [],
+            "is_admin": is_admin
+        }
+        result = db.user.insert_one(new_user)
+        return jsonify({"message": "User created and logged in", "token": str(result.inserted_id)})
+
+@app.route("/user/<token>", methods=["GET"])
+def get_user(token):
+      user_id = ObjectId(token)
+      user = db.user.find_one({"_id": user_id})
+      
+      if user:
+          return jsonify({
+              "_id": str(user["_id"]),
+              "username": user.get("username", ""),
+              "email": user.get("email", ""),
+              "is_admin": user.get("is_admin", False),
+              "rating": user.get("rating", 0),
+              "reviews": user.get("reviews", [])
+          })
+      else:
+          return jsonify({"error": "User not found"}), 404
 
 if __name__ == "__main__":
     app.run(debug=True)

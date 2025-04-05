@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FaUser, FaUserTie } from 'react-icons/fa';
-import { MdAdminPanelSettings, MdPerson } from 'react-icons/md';
 
 
 interface Category {

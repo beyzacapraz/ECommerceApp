@@ -11,7 +11,7 @@ export default function LoginPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Logging in with:", { email, password });
-    router.push("/login"); // Redirects the user to the login page
+    router.push("/login");
 
   };
   return (

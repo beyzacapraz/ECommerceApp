@@ -1,38 +1,148 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+interface Category {
+  _id: string;
+  name: string;
+}
+
 interface Product {
+  _id: string;
   name: string;
   price: number;
+  category_id: string;
+  category_name: string;
+  rating: number;
+  imageUrl: string;
+  description?: string;
 }
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
   useEffect(() => {
+    fetch("http://localhost:5000/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        setCategories(data);
+      })  
     fetch("http://localhost:5000/home")
       .then((res) => res.json())
-      .then((data) => setProducts(data));
+      .then((data) => {
+        setProducts(data);
+        setFilteredProducts(data);
+      })
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
   }, []);
 
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    if (categoryId === "all") {
+      setFilteredProducts(products);
+    } else {
+      setFilteredProducts(products.filter((product) => product.category_id === categoryId));
+    }
+  };
+
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Home</h1>
-      <Link href="/login">
-        <button className="bg-blue-500 text-white px-4 py-2 rounded">
-          Go to Login
-        </button>
-      </Link>
-      <ul className="grid grid-cols-3 gap-4">
-        {products.map((product) => (
-          <li key={product.name} className="border p-4 rounded-lg">
-            <h2 className="font-semibold">{product.name}</h2>
-            <p>${product.price}</p>
-          </li>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Vintage Collections</h1>
+        <Link href="/login">
+          <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+            {isLoggedIn ? "My Account" : "Login"}
+          </button>
+        </Link>
+      </div>
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-3">Filter by Category</h2>
+        <div className="flex flex-wrap gap-2">
+          <button
+            key="all"
+            className={`px-4 py-2 rounded-lg transition duration-300 ${
+              selectedCategory === "all"
+                ? "bg-indigo-600 text-white"
+                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+            }`}
+            onClick={() => handleCategoryChange("all")}
+          >
+            All Products
+          </button>
+          
+          {categories.map((category) => (
+            <button
+              key={category._id}
+              className={`px-4 py-2 rounded-lg transition duration-300 ${
+                selectedCategory === category._id
+                  ? "bg-indigo-600 text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }`}
+              onClick={() => handleCategoryChange(category._id)}
+            >
+              {category.name}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {filteredProducts.map((product) => (
+          <div 
+            key={product._id} 
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-300"
+          >
+            <div className="h-48 relative">
+              {product.imageUrl ? (
+                <img 
+                  src={product.imageUrl} 
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                  <span className="text-gray-500">No image</span>
+                </div>
+              )}
+            </div>
+            <div className="p-4">
+              <h3 className="font-bold text-lg mb-1">{product.name}</h3>
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-semibold text-lg">${product.price.toFixed(2)}</span>
+                <div className="flex items-center">
+                  <span className="text-yellow-500 mr-1">★</span>
+                  <span>{product.rating ? product.rating.toFixed(1) : "New"}</span>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 mb-2">{product.category_name}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+                {product.description || "No description available"}
+              </p>
+              <Link href={isLoggedIn ? `/details/${product._id}` : "/login"}>
+                <button 
+                  className={`w-full py-2 rounded-lg text-center font-medium transition duration-300 ${
+                    isLoggedIn 
+                      ? "bg-green-500 hover:bg-green-600 text-white" 
+                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  {isLoggedIn ? "View Details" : "View deails"}
+                </button>
+              </Link>
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
+      
+      {filteredProducts.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-xl text-gray-500">No products found in this category</p>
+        </div>
+      )}
     </div>
   );
 }

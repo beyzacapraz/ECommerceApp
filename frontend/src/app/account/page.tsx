@@ -4,14 +4,20 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './account.module.css';
 
+interface Review {
+  text: string;
+  product_name?: string;
+}
+
 interface Account {
   _id: string;
   username: string;
   email: string;
   rating?: number;
-  reviews?: string[];
+  reviews?: Review[];
   is_admin?: boolean;
 }
+
 
 export default function MyAccountPage() {
   const [user, setUser] = useState<Account | null>(null);
@@ -66,15 +72,17 @@ export default function MyAccountPage() {
 
             {user.reviews && user.reviews.length > 0 && (
                 <div className="bg-white/80 border border-gray-200 rounded-lg p-5 shadow-sm mt-4">
-                <h2 className="text-lg font-semibold mb-2 text-gray-800 border-b pb-1">Your Reviews</h2>
-                <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                    <h2 className="text-lg font-semibold mb-2 text-gray-800 border-b pb-1">Your Reviews</h2>
+                    <ul className="space-y-4 text-sm text-gray-700">
                     {user.reviews.map((review, index) => (
-                    <li key={index}>{review}</li>
+                        <li key={index} className="border-b pb-2">
+                        <p className="mb-1"><strong>Product:</strong> {review.product_name || "Unknown Product"}</p>
+                        <p className="mb-1"><strong>Review:</strong> {review.text}</p>
+                        </li>
                     ))}
-                </ul>
+                    </ul>
                 </div>
-            )}
-
+                )}
             </div>
         </div>
         </div>

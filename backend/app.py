@@ -3,7 +3,7 @@ from flask_cors import CORS
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 import os
-
+import datetime
 app = Flask(__name__)
 CORS(app)
 
@@ -100,64 +100,122 @@ def login():
         result = db.user.insert_one(new_user)
         return jsonify({"message": "User created and logged in", "token": str(result.inserted_id)})
 
-@app.route("/user/<token>", methods=["GET"])
+@app.route("/user/<token>", methods=["GET", "POST"])
 def get_user(token):
-      user_id = ObjectId(token)
-      user = db.user.find_one({"_id": user_id})
-      
-      if user:
-          return jsonify({
-              "_id": str(user["_id"]),
-              "username": user.get("username", ""),
-              "email": user.get("email", ""),
-              "is_admin": user.get("is_admin", False),
-              "rating": user.get("rating", 0),
-              "reviews": user.get("reviews", [])
-          })
-      else:
-          return jsonify({"error": "User not found"}), 404
+    user_id = ObjectId(token)
+    user = db.user.find_one({"_id": user_id})
+    review_docs = []
+    for review_id in user.get("reviews", []):
+        review = db.reviews.find_one({"_id": ObjectId(review_id)})
+        if review:
+            product = db.products.find_one({"_id": review["product_id"]})
+            review_docs.append({
+                "text": review.get("text", ""),
+                "product_name": product["name"] if product else "Unknown Product"
+            })
+
+    return jsonify({
+        "_id": str(user["_id"]),
+        "username": user.get("username", ""),
+        "email": user.get("email", ""),
+        "is_admin": user.get("is_admin", False),
+        "rating": user.get("rating", 0),
+        "reviews": review_docs
+    })
       
 
 @app.route("/products/<product_id>", methods=["GET"])
 def get_product_details(product_id):
-    try:
-        product = db.products.find_one({"_id": ObjectId(product_id)})
-        if not product:
-            return jsonify({"error": "Product not found"}), 404
+    product = db.products.find_one({"_id": ObjectId(product_id)})
+    category_id = product.get("category_id")
+    category_name = "Uncategorized"
+    if category_id:
+        category = db.categories.find_one({"_id": ObjectId(category_id)})
+        if category:
+            category_name = category.get("name", "Uncategorized")
+
+    product_details = {
+        "_id": str(product["_id"]),
+        "name": product.get("name", "Unnamed Product"),
+        "price": product.get("price", 0),
+        "description": product.get("description", ""),
+        "image": product.get("image", ""),
+        "seller": product.get("seller", "Unknown"),
+        "rating": product.get("rating", 0),
+        "category_name": category_name,
+        "reviews": []
+    }
+    if category_name == "GPS Sport Watches":
+        product_details["battery_life"] = product.get("battery_life", "")
+    elif category_name in ["Antique Furniture", "Vinyls"]:
+        product_details["age"] = product.get("age", "")
+    if category_name == "Running Shoes":
+        product_details["size"] = product.get("size", "")
+        product_details["material"] = product.get("material", "")
+    elif category_name == "Antique Furniture":
+        product_details["material"] = product.get("material", "")
+
+    if "reviews" in product:
+        for review_id in product["reviews"]:
+            review = db.reviews.find_one({"_id": review_id})
+            if review:
+                product_details["reviews"].append({
+                    "text": review.get("text", ""),
+                    "username": review.get("username", "Anonymous"),
+                    "created_at": review.get("created_at", datetime.datetime.utcnow()).isoformat() if review.get("created_at") else None,
+                    "rating": review.get("rating", 0)
+                })
         
-        category_id = product.get("category_id")
-        category_name = "Uncategorized"
-        if category_id:
-            category = db.categories.find_one({"_id": ObjectId(category_id)})
-            if category:
-                category_name = category.get("name", "Uncategorized")
+    return jsonify(product_details)
+
+@app.route("/add-review", methods=["POST"])
+def add_review():
+    data = request.json
+    user_id = data.get("user_id")
+    product_id = data.get("product_id")
+    text = data.get("text")
+    rating = data.get("rating", 5)
+    user_obj_id = ObjectId(user_id)
+    product_obj_id = ObjectId(product_id)
+
+    user = db.user.find_one({"_id": user_obj_id})
+    if not user:
+        return jsonify({"error": "User not found"}), 404
         
-        product_details = {
-            "_id": str(product["_id"]),
-            "name": product.get("name", "Unnamed Product"),
-            "price": product.get("price", 0),
-            "description": product.get("description", ""),
-            "image": product.get("image", ""),
-            "seller": product.get("seller", "Unknown"),
-            "rating": product.get("rating", 0),
-            "category_name": category_name,
-            "reviews": product.get("reviews", []),
-            "rating": product.get("rating", 0)
-        }
-        
-        if category_name == "GPS Sport Watches":
-            product_details["battery_life"] = product.get("battery_life", "")
-        elif category_name in ["Antique Furniture", "Vinyls"]:
-            product_details["age"] = product.get("age", "")
-        if category_name == "Running Shoes":
-            product_details["size"] = product.get("size", "")
-            product_details["material"] = product.get("material", "")
-        elif category_name == "Antique Furniture":
-            product_details["material"] = product.get("material", "")
-            
-        return jsonify(product_details)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    username = user.get("username", "Anonymous")
+    review_doc = {
+        "user_id": user_obj_id,
+        "product_id": product_obj_id,
+        "text": text,
+        "rating": rating,
+        "username": username,
+        "created_at": datetime.datetime.utcnow()
+    }
     
+    result = db.reviews.insert_one(review_doc)
+    review_id = result.inserted_id
+    db.user.update_one(
+        {"_id": user_obj_id},
+        {"$push": {"reviews": review_id}}
+    )
+    db.products.update_one(
+        {"_id": product_obj_id},
+        {"$push": {"reviews": review_id}}
+    )
+    product_reviews = list(db.reviews.find({"product_id": product_obj_id}))
+    if product_reviews:
+        avg_rating = sum(review.get("rating", 0) for review in product_reviews) / len(product_reviews)
+        db.products.update_one(
+            {"_id": product_obj_id},
+            {"$set": {"rating": avg_rating}}
+        )
+
+    return jsonify({
+        "message": "Review added successfully", 
+        "review_id": str(review_id)
+    })
+        
+
+
 if __name__ == "__main__":
     app.run(debug=True)

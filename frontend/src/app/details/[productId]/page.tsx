@@ -17,32 +17,76 @@ interface ProductDetails {
   size?: number[];
   material?: string;
   rating?: number;
-  reviews?: string[];
+  reviews?: {
+    text: string;
+    username: string;
+    created_at?: string;
+  }[];
 }
 
 export default function ProductDetailsPage() {
   const [product, setProduct] = useState<ProductDetails | null>(null);
+  const [reviewText, setReviewText] = useState("");
+  const [rating, setRating] = useState(5);
   const params = useParams();
   const router = useRouter();
   const productId = params.productId as string;
 
+  const handleSubmitReview = async () => {
+    const token = localStorage.getItem("token");
+      const userRes = await fetch(`http://localhost:5000/user/${token}`);
+      if (!userRes.ok) {
+        throw new Error("Failed to get user information");
+      }
+      const userData = await userRes.json();
+      const reviewPayload = {
+        text: reviewText,
+        user_id: token,
+        product_id: productId,
+        rating: rating
+      };
+
+      const response = await fetch("http://localhost:5000/add-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reviewPayload)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const newReview = {
+          text: reviewText,
+          username: userData.username,
+          created_at: new Date().toISOString()
+        };
+
+        setProduct((prev) => prev && {
+          ...prev,
+          reviews: [...(prev.reviews || []), newReview]
+        });
+        setReviewText("");
+        setRating(5);
+        alert("Review added successfully!");
+        fetchProduct();
+      }
+
+  };
+
+  const fetchProduct = async () => {
+      const response = await fetch(`http://localhost:5000/products/${productId}`);
+      const data = await response.json();
+      setProduct(data);
+
+  };
+
   useEffect(() => {
-    const fetchProduct = async () => {
-    const response = await fetch(`http://localhost:5000/products/${productId}`);
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
-    }
-    const data = await response.json();
-    setProduct(data);
-
-    };
-
     if (productId) {
       fetchProduct();
     }
   }, [productId]);
 
-  if (!product) return <div className="text-center mt-10">No product found.</div>;
+  if (!product) return <div className="text-center mt-10">Loading product details...</div>;
 
   return (
     <div className={styles.container}>
@@ -72,12 +116,33 @@ export default function ProductDetailsPage() {
               <p><strong>Rating:</strong> {product.rating?.toFixed(1) || "0.0"}/10</p>
             </div>
 
-            <div className="flex gap-3 mt-4">
-              <button className="px-4 py-2 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition-all">
-                Rate
-              </button>
-              <button className="px-4 py-2 bg-purple-500 text-white rounded-lg shadow-md hover:bg-purple-600 transition-all">
-                Review
+            <div className="mt-6 border-t pt-4">
+              <h3 className="text-black font-semibold mb-2">Add Your Review</h3>
+              <textarea
+                className="w-full p-2 border rounded text-black"
+                rows={4}
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Write your review here..."
+              />
+              <div className="my-2 text-black">
+                <label className="mr-2 font-medium text-black">Rating:</label>
+                <select 
+                  value={rating} 
+                  onChange={(e) => setRating(parseInt(e.target.value))}
+                  className="border rounded p-1"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
+                <span className="ml-1">/10</span>
+              </div>
+              <button
+                onClick={handleSubmitReview}
+                className="px-4 py-2 bg-[#c3e5ae] text-black  mt-2"
+              >
+                Submit Review
               </button>
             </div>
           </div>
@@ -90,7 +155,15 @@ export default function ProductDetailsPage() {
               <ul className="space-y-4">
                 {product.reviews.map((review, index) => (
                   <li key={index} className={styles.review_card}>
-                    {review}
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-blue-700">{review.username}</span>
+                    </div>
+                    <p className="text-gray-800 mt-1">{review.text}</p>
+                    {review.created_at && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(review.created_at).toLocaleDateString()}
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>

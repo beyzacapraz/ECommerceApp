@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import styles from './details.module.css';
+export const dynamic = "force-dynamic";
 
 interface ProductDetails {
   _id: string;
@@ -23,7 +24,6 @@ interface ProductDetails {
     created_at?: string;
   }[];
 }
-export const dynamic = "force-dynamic";
 
 export default function ProductDetailsPage() {
   const [product, setProduct] = useState<ProductDetails | null>(null);
@@ -35,10 +35,7 @@ export default function ProductDetailsPage() {
 
   const handleSubmitReview = async () => {
     const token = localStorage.getItem("token");
-      const userRes = await fetch(`http://localhost:5000/user/${token}`);
-      if (!userRes.ok) {
-        throw new Error("Failed to get user information");
-      }
+      const userRes = await fetch(`http://localhost:5000/user/${token}`,{cache: 'no-store'});
       const userData = await userRes.json();
       const reviewPayload = {
         text: reviewText,
@@ -50,7 +47,8 @@ export default function ProductDetailsPage() {
       const response = await fetch("http://localhost:5000/add-review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(reviewPayload)
+        body: JSON.stringify(reviewPayload),
+        cache: 'no-store'
       });
       if (response.ok) {
         const newReview = {
@@ -72,7 +70,8 @@ export default function ProductDetailsPage() {
   };
 
   const fetchProduct = async () => {
-      const response = await fetch(`http://localhost:5000/products/${productId}`);
+      const response = await fetch(`http://localhost:5000/products/${productId}`,{cache: 'no-store'});
+
       const data = await response.json();
       setProduct(data);
 

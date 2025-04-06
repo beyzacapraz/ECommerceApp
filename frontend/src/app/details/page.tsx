@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './details.module.css';
-export const dynamic = "force-dynamic";
 
 interface ProductDetails {
   _id: string;
@@ -184,4 +183,5 @@ export default function ProductDetailsPage() {
       </div>
     </div>
   );
+
 }

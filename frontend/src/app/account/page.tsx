@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './account.module.css';
-
 interface Review {
   text: string;
   product_name?: string;

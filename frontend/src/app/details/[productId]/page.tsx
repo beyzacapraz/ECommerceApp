@@ -51,9 +51,6 @@ export default function ProductDetailsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(reviewPayload)
       });
-
-      const data = await response.json();
-
       if (response.ok) {
         const newReview = {
           text: reviewText,

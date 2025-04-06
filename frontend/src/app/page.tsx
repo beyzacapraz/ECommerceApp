@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FaUser, FaUserTie } from 'react-icons/fa';
 
-
 interface Category {
   _id: string;
   name: string;
@@ -35,21 +34,23 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
-    fetch("http://localhost:5000/categories")
+    fetch(`${API_URL}/categories`)
       .then((res) => res.json())
       .then((data) => setCategories(data));
 
-    fetch("http://localhost:5000/home")
+    fetch(`${API_URL}/home`)
       .then((res) => res.json())
       .then((data) => {
         setProducts(data);
         setFilteredProducts(data);
       });
+
     const token = localStorage.getItem("token");
     if (token) {
-      fetch(`http://localhost:5000/user/${token}`)
+      fetch(`${API_URL}/user/${token}`)
         .then((res) => res.json())
         .then((data) => {
           setUserInfo(data);
@@ -78,21 +79,21 @@ export default function Home() {
     }
   };
 
- const UserRoleIcon = () => {
-  if (!isLoggedIn || !userInfo) return null;
-  
-  return userInfo.is_admin ? (
-    <div className="flex items-center text-purple-600" title="Admin Account">
-      <FaUserTie className="h-5 w-5 mr-1" />
-      <span className="font-medium">Admin</span>
-    </div>
-  ) : (
-    <div className="flex items-center text-blue-600" title="User Account">
-      <FaUser className="h-5 w-5 mr-1" />
-      <span className="font-medium">User</span>
-    </div>
-  );
-};
+  const UserRoleIcon = () => {
+    if (!isLoggedIn || !userInfo) return null;
+
+    return userInfo.is_admin ? (
+      <div className="flex items-center text-purple-600" title="Admin Account">
+        <FaUserTie className="h-5 w-5 mr-1" />
+        <span className="font-medium">Admin</span>
+      </div>
+    ) : (
+      <div className="flex items-center text-blue-600" title="User Account">
+        <FaUser className="h-5 w-5 mr-1" />
+        <span className="font-medium">User</span>
+      </div>
+    );
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">

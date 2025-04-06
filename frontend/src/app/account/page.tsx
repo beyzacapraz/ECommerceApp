@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './account.module.css';
+
 interface Review {
   text: string;
   product_name?: string;
@@ -17,25 +18,24 @@ interface Account {
   is_admin?: boolean;
 }
 
-
 export default function MyAccountPage() {
   const [user, setUser] = useState<Account | null>(null);
   const router = useRouter();
-
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   useEffect(() => {
     const fetchUser = async () => {
-    const response = await fetch(`http://localhost:5000/user/${token}`);
-    const data = await response.json();
-    setUser(data);
-     
+      const response = await fetch(`${API_URL}/user/${token}`);
+      const data = await response.json();
+      setUser(data);
     };
 
     if (token) {
       fetchUser();
     }
   }, [token]);
+
   if (!user) return <div className="text-center mt-10">No user found.</div>;
  return (
     <div className={styles.container}>

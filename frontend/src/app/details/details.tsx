@@ -31,10 +31,10 @@ export default function ProductDetailsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const productId = searchParams.get('id');
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
   const handleSubmitReview = async () => {
     const token = localStorage.getItem("token");
-    const API_URL = 'http://localhost:5000';
     
     try {
       const userRes = await fetch(`${API_URL}/user/${token}`,{cache: 'no-store'});
@@ -76,7 +76,7 @@ export default function ProductDetailsPage() {
   const fetchProduct = async () => {
     if (!productId) return;
     
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    
     try {
       const response = await fetch(`${API_URL}/products/${productId}`,{cache: 'no-store'});
       const data = await response.json();

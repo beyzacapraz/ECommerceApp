@@ -30,8 +30,7 @@ export default function ProductDetailsPage() {
   const [rating, setRating] = useState(5);
   const params = useParams();
   const router = useRouter();
-  // const productId = params.productId as string;
-  const productId = params.productid as string;
+  const productId = params.productId as string;
 
   const handleSubmitReview = async () => {
     const token = localStorage.getItem("token");

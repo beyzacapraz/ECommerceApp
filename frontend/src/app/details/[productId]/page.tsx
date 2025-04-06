@@ -23,6 +23,7 @@ interface ProductDetails {
     created_at?: string;
   }[];
 }
+export const dynamic = "force-dynamic";
 
 export default function ProductDetailsPage() {
   const [product, setProduct] = useState<ProductDetails | null>(null);

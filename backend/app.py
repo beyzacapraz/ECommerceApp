@@ -4,10 +4,13 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 import os
 import datetime
+
+
 app = Flask(__name__)
 CORS(app)
 
-MONGO_URI = os.getenv('MONGO_URI')
+# MONGO_URI = os.getenv('MONGO_URI')
+MONGO_URI = "mongodb+srv://beyzacapraz:BeyzaC.2@ecommercedb.cpwha.mongodb.net/?retryWrites=true&w=majority&appName=ECommerceDb"
 client = MongoClient(MONGO_URI)
 db = client["ecommercedb"]
 

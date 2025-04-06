@@ -7,7 +7,7 @@ import datetime
 app = Flask(__name__)
 CORS(app)
 
-MONGO_URI = "mongodb+srv://beyzacapraz:BeyzaC.2@ecommercedb.cpwha.mongodb.net/"
+MONGO_URI = os.getenv('MONGO_URI')
 client = MongoClient(MONGO_URI)
 db = client["ecommercedb"]
 

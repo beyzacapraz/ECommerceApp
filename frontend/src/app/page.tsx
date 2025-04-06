@@ -100,22 +100,29 @@ export default function Home() {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold text-black">My Collections</h1>
 
-        <div className="flex items-center gap-4">
-            <UserRoleIcon />
-            <Link href={isLoggedIn ? "/account" : "/login"}>
-              <button className="bg-[#50c878] text-black font-medium py-2 px-4 rounded-lg transition duration-300">
-                {isLoggedIn ? "My Account" : "Login"}
-              </button>
-            </Link>
-            {isLoggedIn && (
-              <button
-                className="bg-[#fb8a2e] text-black font-medium py-2 px-4 rounded-lg transition duration-300"
-                onClick={handleLogout}
-              >
-                Logout
-              </button>
-            )}
-          </div>
+       <div className="flex items-center gap-4">
+        <UserRoleIcon />
+        {isLoggedIn && userInfo?.is_admin && (
+          <Link href="/admin">
+            <button className="bg-purple-600 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+              Admin
+            </button>
+          </Link>
+        )}
+        <Link href={isLoggedIn ? "/account" : "/login"}>
+          <button className="bg-[#50c878] text-black font-medium py-2 px-4 rounded-lg transition duration-300">
+            {isLoggedIn ? "My Account" : "Login"}
+          </button>
+        </Link>
+        {isLoggedIn && (
+          <button
+            className="bg-[#fb8a2e] text-black font-medium py-2 px-4 rounded-lg transition duration-300"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        )}
+      </div>
       </div>
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-black">Filter by Category</h2>

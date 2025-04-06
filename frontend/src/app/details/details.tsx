@@ -35,55 +35,45 @@ export default function ProductDetailsPage() {
 
   const handleSubmitReview = async () => {
     const token = localStorage.getItem("token");
-    
-    try {
-      const userRes = await fetch(`${API_URL}/user/${token}`,{cache: 'no-store'});
-      const userData = await userRes.json();
-      const reviewPayload = {
+    const userRes = await fetch(`${API_URL}/user/${token}`,{cache: 'no-store'});
+    const userData = await userRes.json();
+    const reviewPayload = {
+      text: reviewText,
+      user_id: token,
+      product_id: productId,
+      rating: rating
+    };
+
+    const response = await fetch(`${API_URL}/add-review`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(reviewPayload),
+      cache: 'no-store'
+    });
+    if (response.ok) {
+      const newReview = {
         text: reviewText,
-        user_id: token,
-        product_id: productId,
-        rating: rating
+        username: userData.username,
+        created_at: new Date().toISOString()
       };
 
-      const response = await fetch(`${API_URL}/add-review`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(reviewPayload),
-        cache: 'no-store'
+      setProduct((prev) => prev && {
+        ...prev,
+        reviews: [...(prev.reviews || []), newReview]
       });
-      if (response.ok) {
-        const newReview = {
-          text: reviewText,
-          username: userData.username,
-          created_at: new Date().toISOString()
-        };
-
-        setProduct((prev) => prev && {
-          ...prev,
-          reviews: [...(prev.reviews || []), newReview]
-        });
-        setReviewText("");
-        setRating(5);
-        alert("Review added successfully!");
-        fetchProduct();
-      }
-    } catch (error) {
-      console.error("Error submitting review:", error);
+      setReviewText("");
+      setRating(5);
+      alert("Review added successfully!");
+      fetchProduct();
     }
   };
 
   const fetchProduct = async () => {
     if (!productId) return;
+    const response = await fetch(`${API_URL}/products/${productId}`,{cache: 'no-store'});
+    const data = await response.json();
+    setProduct(data);
     
-    
-    try {
-      const response = await fetch(`${API_URL}/products/${productId}`,{cache: 'no-store'});
-      const data = await response.json();
-      setProduct(data);
-    } catch (error) {
-      console.error("Error fetching product:", error);
-    }
   };
 
   useEffect(() => {

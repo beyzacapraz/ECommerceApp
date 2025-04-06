@@ -8,8 +8,6 @@ import datetime
 
 app = Flask(__name__)
 CORS(app)
-
-# MONGO_URI = os.getenv('MONGO_URI')
 MONGO_URI = "mongodb+srv://beyzacapraz:BeyzaC.2@ecommercedb.cpwha.mongodb.net/?retryWrites=true&w=majority&appName=ECommerceDb"
 client = MongoClient(MONGO_URI)
 db = client["ecommercedb"]
@@ -219,6 +217,80 @@ def add_review():
     })
         
 
+@app.route("/users", methods=["GET"])
+def get_users():
+    users_cursor = db.user.find()
+    users = []
+    for user in users_cursor:
+        users.append({
+            "_id": str(user["_id"]),
+            "username": user.get("username", ""),
+            "email": user.get("email", ""),
+            "is_admin": user.get("is_admin", False),
+            "rating": user.get("rating", 0)
+        })
+    return jsonify(users)
+
+@app.route("/products", methods=["POST"])
+def add_product():
+    data = request.json
+    product = {
+        "name": data.get("name"),
+        "price": data.get("price", 0),
+        "category_id": ObjectId(data.get("category_id")) if data.get("category_id") else None,
+        "image": data.get("image", ""),
+        "description": data.get("description", ""),
+        "rating": 0,
+        "reviews": []
+    }
+    result = db.products.insert_one(product)
+    product["_id"] = str(result.inserted_id)
+    return jsonify(product)
+
+@app.route("/products/<product_id>", methods=["DELETE"])
+def delete_product(product_id):
+    product_obj_id = ObjectId(product_id)
+    
+    reviews = db.reviews.find({"product_id": product_obj_id})
+    for review in reviews:
+        db.user.update_many(
+            {"reviews": review["_id"]},
+            {"$pull": {"reviews": review["_id"]}}
+        )
+    db.reviews.delete_many({"product_id": product_obj_id})
+    db.products.delete_one({"_id": product_obj_id})
+    
+    return jsonify({"message": "Product deleted successfully"})
+
+@app.route("/users", methods=["POST"])
+def add_user():
+    data = request.json
+    user = {
+        "username": data.get("username"),
+        "email": data.get("email"),
+        "is_admin": data.get("is_admin", False),
+        "rating": 0,
+        "reviews": []
+    }
+    result = db.user.insert_one(user)
+    user["_id"] = str(result.inserted_id)
+    return jsonify(user)
+
+@app.route("/users/<user_id>", methods=["DELETE"])
+def delete_user(user_id):
+    user_obj_id = ObjectId(user_id)
+    reviews = db.reviews.find({"user_id": user_obj_id})
+    for review in reviews:
+        db.products.update_many(
+            {"reviews": review["_id"]},
+            {"$pull": {"reviews": review["_id"]}}
+        )
+    
+    db.reviews.delete_many({"user_id": user_obj_id})
+    
+    db.user.delete_one({"_id": user_obj_id})
+    
+    return jsonify({"message": "User deleted successfully"})
 
 if __name__ == "__main__":
     app.run(debug=True)

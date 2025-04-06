@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './details.module.css';
 export const dynamic = "force-dynamic";
 
@@ -29,13 +29,16 @@ export default function ProductDetailsPage() {
   const [product, setProduct] = useState<ProductDetails | null>(null);
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState(5);
-  const params = useParams();
   const router = useRouter();
-  const productId = params.productId as string;
+  const searchParams = useSearchParams();
+  const productId = searchParams.get('id');
 
   const handleSubmitReview = async () => {
     const token = localStorage.getItem("token");
-      const userRes = await fetch(`http://localhost:5000/user/${token}`,{cache: 'no-store'});
+    const API_URL = 'http://localhost:5000';
+    
+    try {
+      const userRes = await fetch(`${API_URL}/user/${token}`,{cache: 'no-store'});
       const userData = await userRes.json();
       const reviewPayload = {
         text: reviewText,
@@ -44,7 +47,7 @@ export default function ProductDetailsPage() {
         rating: rating
       };
 
-      const response = await fetch("http://localhost:5000/add-review", {
+      const response = await fetch(`${API_URL}/add-review`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(reviewPayload),
@@ -66,15 +69,22 @@ export default function ProductDetailsPage() {
         alert("Review added successfully!");
         fetchProduct();
       }
-
+    } catch (error) {
+      console.error("Error submitting review:", error);
+    }
   };
 
   const fetchProduct = async () => {
-      const response = await fetch(`http://localhost:5000/products/${productId}`,{cache: 'no-store'});
-
+    if (!productId) return;
+    
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    try {
+      const response = await fetch(`${API_URL}/products/${productId}`,{cache: 'no-store'});
       const data = await response.json();
       setProduct(data);
-
+    } catch (error) {
+      console.error("Error fetching product:", error);
+    }
   };
 
   useEffect(() => {
@@ -83,7 +93,9 @@ export default function ProductDetailsPage() {
     }
   }, [productId]);
 
+  if (!productId) return <div className="text-center mt-10">Product ID is missing</div>;
   if (!product) return <div className="text-center mt-10">Loading product details...</div>;
+
 
   return (
     <div className={styles.container}>

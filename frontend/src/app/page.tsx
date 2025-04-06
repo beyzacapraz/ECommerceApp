@@ -157,7 +157,7 @@ export default function Home() {
               <p className="text-sm text-black text-black mb-4 line-clamp-2">
                 {product.description || "No description available"}
               </p>
-              <Link href={isLoggedIn ? `/details/${product._id}` : "/login"}>
+              <Link href={isLoggedIn ? `/details?id=${product._id}` : "/login"}>
                 <button className={`w-full py-2 px-4 rounded-lg transition duration-300 ${
                   isLoggedIn
                     ? "bg-[#50c878] hover:bg-[#50c878] text-black"

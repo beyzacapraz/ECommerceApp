@@ -49,4 +49,5 @@ I chose **Flask** because I was a little bit familiar with it because of my fina
 ---
 
 ### Vercel Url
-I do not have working vercel deployment url but I will share the link for you anyways. I hope this won't effect the grading too much.
+I do not have working vercel deployment url but I will share the link for you anyways. I hope this won't effect the grading too much:
+https://e-commerce-app-flax-ten.vercel.app/

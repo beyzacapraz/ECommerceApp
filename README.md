@@ -57,3 +57,24 @@ I chose **Next.js** for the frontend because my research showed that deploying w
 Unfortunately, I do not have a fully working Vercel deployment at the moment, but I am sharing the link anyway. I hope this won’t affect the grading too much:
 
 👉 [https://e-commerce-app-flax-ten.vercel.app/](https://e-commerce-app-flax-ten.vercel.app/)
+
+## For running application 
+### Backend
+cd backend
+python -m venv venv
+source venv/bin/activate 
+pip install flask pymongo flask-cors python-dotenv
+
+### Activate Backend
+source venv/bin/activate
+python3 app.py
+
+### Frontend
+cd frontend
+npm install next react react-dom
+npm install react-icons
+npm install @vercel/fonts
+
+### Activate Frontend 
+cd frontend
+npm run dev

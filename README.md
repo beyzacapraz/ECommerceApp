@@ -1,15 +1,5 @@
 # eCommerce Application
 
-## Table of Contents
-1. [Introduction](#introduction)
-2. [Technologies Used](#technologies-used)
-3. [Login Instructions](#login-instructions)
-4. [User Guide](#user-guide)
-5. [Why These Choices?](#why-these-choices)
-6. [Future Improvements](#future-improvements)
-
----
-
 ## Introduction
 This is an eCommerce application designed to provide a seamless shopping experience for users. It includes features such as user authentication, product browsing, rating and reviewing, and admin functionalities for managing products and users. This is my first website project and it was very hard. I hope it would pelease the users.
 

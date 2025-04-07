@@ -8,12 +8,18 @@ interface Review {
   text: string;
   product_name?: string;
 }
+interface Rating {
+  rating: number;
+  product_name?: string;
+  product_id: string;
+}
 
 interface Account {
   _id: string;
   username: string;
   email: string;
-  rating?: number;
+  avg_rating?: number;  // Average rating (number)
+  ratings?: Rating[];   // Array of rating objects
   reviews?: Review[];
   is_admin?: boolean;
 }
@@ -51,10 +57,22 @@ export default function MyAccountPage() {
                 <h1 className="text-2xl font-bold mb-2 text-gray-900">Welcome, {user.username}</h1>
                 <p className="mb-1"><strong>Email:</strong> {user.email}</p>
                 <p className="mb-1"><strong>Admin:</strong> {user.is_admin ? "Yes" : "No"}</p>
-                {user.rating !== undefined && (
-                <p className="mb-1"><strong>Rating:</strong> {user.rating.toFixed(1)} / 10</p>
+                {user.avg_rating !== undefined && (
+                    <p className="mb-1"><strong>Average Rating:</strong> {user.avg_rating.toFixed(1)} / 10</p>
+                  )}
+                {user.ratings && user.ratings.length > 0 && (
+                  <div className="bg-white/80 border border-gray-200 rounded-lg p-5 shadow-sm mt-4">
+                    <h2 className="text-lg font-semibold mb-2 text-gray-800 border-b pb-1">Your Ratings</h2>
+                    <ul className="space-y-4 text-sm text-gray-700">
+                      {user.ratings.map((rating, index) => (
+                        <li key={index} className="border-b pb-2">
+                          <p className="mb-1"><strong>Product:</strong> {rating.product_name || "Unknown Product"}</p>
+                          <p className="mb-1"><strong>Rating:</strong> {rating.rating}/10</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
-
                 <div className="flex gap-3 mt-4">
                 <button className="px-4 py-2 bg-[#50c878] text-black rounded-md shadow">
                     Edit Profile

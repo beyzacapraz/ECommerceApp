@@ -12,6 +12,7 @@ MONGO_URI = "mongodb+srv://beyzacapraz:BeyzaC.2@ecommercedb.cpwha.mongodb.net/?r
 client = MongoClient(MONGO_URI)
 db = client["ecommercedb"]
 
+
 @app.route("/home", methods=["GET"])
 def get_products():
     categories = {}
@@ -94,8 +95,9 @@ def login():
             "username": username,
             "email": email,
             "password": password,
-            "rating": 0,
+            "avg_rating": 0,  # Average rating starts at 0
             "reviews": [],
+            "ratings": [],    # Initialize empty ratings array
             "is_admin": is_admin
         }
         result = db.user.insert_one(new_user)
@@ -135,9 +137,9 @@ def get_user(token):
         "username": user.get("username", ""),
         "email": user.get("email", ""),
         "is_admin": user.get("is_admin", False),
-        "rating": user.get("rating", 0),
+        "avg_rating": user.get("avg_rating", 0),  # Average rating
         "reviews": review_docs,
-        "ratings": rating_docs
+        "ratings": rating_docs  # Array of rating objects
     })
       
 
@@ -247,7 +249,7 @@ def get_users():
             "username": user.get("username", ""),
             "email": user.get("email", ""),
             "is_admin": user.get("is_admin", False),
-            "rating": user.get("rating", 0)
+            "avg_rating": user.get("avg_rating", 0)  # Use avg_rating in the response
         })
     return jsonify(users)
 
@@ -270,8 +272,7 @@ def add_product():
 @app.route("/products/<product_id>", methods=["DELETE"])
 def delete_product(product_id):
     product_obj_id = ObjectId(product_id)
-    
-    reviews = db.reviews.find({"product_id": product_obj_id})
+    reviews = list(db.reviews.find({"product_id": product_obj_id}))
     for review in reviews:
         db.user.update_many(
             {"reviews": review["_id"]},
@@ -279,13 +280,31 @@ def delete_product(product_id):
         )
     db.reviews.delete_many({"product_id": product_obj_id})
     
-    ratings = db.ratings.find({"product_id": product_obj_id})
+    ratings = list(db.ratings.find({"product_id": product_obj_id}))
+    affected_users = set()
+    
     for rating in ratings:
+        affected_users.add(rating["user_id"])
         db.user.update_many(
             {"ratings": rating["_id"]},
             {"$pull": {"ratings": rating["_id"]}}
         )
+    
     db.ratings.delete_many({"product_id": product_obj_id})
+    for user_id in affected_users:
+        remaining_ratings = list(db.ratings.find({"user_id": user_id}))
+        if remaining_ratings:
+            avg_rating = sum(r.get("rating", 0) for r in remaining_ratings) / len(remaining_ratings)
+            db.user.update_one(
+                {"_id": user_id},
+                {"$set": {"rating": avg_rating}}
+            )
+        else:
+            db.user.update_one(
+                {"_id": user_id},
+                {"$set": {"rating": 0}}
+            )
+
     db.products.delete_one({"_id": product_obj_id})
     
     return jsonify({"message": "Product deleted successfully"})
@@ -299,7 +318,7 @@ def users_operations():
             "username": user.get("username", ""),
             "email": user.get("email", ""),
             "is_admin": user.get("is_admin", False),
-            "rating": user.get("rating", 0)
+            "avg_rating": user.get("avg_rating", 0)  # Use avg_rating
         } for user in users_cursor]
         return jsonify(users)
     
@@ -316,8 +335,9 @@ def users_operations():
             "email": data.get("email"),
             "password": data.get("password"),
             "is_admin": data.get("is_admin", False),
-            "rating": 0,
-            "reviews": []
+            "avg_rating": 0,  # Average rating
+            "reviews": [],
+            "ratings": []     # Array of rating IDs
         }
         result = db.user.insert_one(user)
         user["_id"] = str(result.inserted_id)
@@ -327,36 +347,39 @@ def users_operations():
 def delete_user(user_id):
     user_obj_id = ObjectId(user_id)
     
-    reviews = db.reviews.find({"user_id": user_obj_id})
+    # Handle reviews
+    reviews = list(db.reviews.find({"user_id": user_obj_id}))
     for review in reviews:
         db.products.update_many(
             {"reviews": review["_id"]},
             {"$pull": {"reviews": review["_id"]}}
         )
     db.reviews.delete_many({"user_id": user_obj_id})
+    ratings = list(db.ratings.find({"user_id": user_obj_id}))
+    affected_products = set()
     
-    ratings = db.ratings.find({"user_id": user_obj_id})
     for rating in ratings:
+        affected_products.add(rating["product_id"])
         db.products.update_many(
             {"ratings": rating["_id"]},
             {"$pull": {"ratings": rating["_id"]}}
         )
-        product = db.products.find_one({"_id": rating["product_id"]})
-        if product:
-            product_ratings = list(db.ratings.find({"product_id": rating["product_id"]}))
-            if product_ratings:
-                avg_rating = sum(r.get("rating", 0) for r in product_ratings) / len(product_ratings)
-                db.products.update_one(
-                    {"_id": rating["product_id"]},
-                    {"$set": {"rating": avg_rating}}
-                )
-            else:
-                db.products.update_one(
-                    {"_id": rating["product_id"]},
-                    {"$set": {"rating": 0}}
-                )
     
     db.ratings.delete_many({"user_id": user_obj_id})
+    for product_id in affected_products:
+        remaining_ratings = list(db.ratings.find({"product_id": product_id}))
+        if remaining_ratings:
+            avg_rating = sum(r.get("rating", 0) for r in remaining_ratings) / len(remaining_ratings)
+            db.products.update_one(
+                {"_id": product_id},
+                {"$set": {"rating": avg_rating}}
+            )
+        else:
+            db.products.update_one(
+                {"_id": product_id},
+                {"$set": {"rating": 0}}
+            )
+
     db.user.delete_one({"_id": user_obj_id})
     
     return jsonify({"message": "User deleted successfully"})
@@ -380,12 +403,14 @@ def add_rating():
     })
     
     if existing_rating:
+        # Update existing rating
         db.ratings.update_one(
             {"_id": existing_rating["_id"]},
             {"$set": {"rating": rating_value, "updated_at": datetime.datetime.utcnow()}}
         )
         rating_id = existing_rating["_id"]
     else:
+        # Create new rating
         rating_doc = {
             "user_id": user_obj_id,
             "product_id": product_obj_id,
@@ -403,12 +428,28 @@ def add_rating():
             {"_id": product_obj_id},
             {"$addToSet": {"ratings": rating_id}}
         )
+    
+    # Update user's average rating
     user_ratings = list(db.ratings.find({"user_id": user_obj_id}))
     if user_ratings:
-        user_avg_rating = sum(rating.get("rating", 0) for rating in user_ratings) / len(user_ratings)
+        user_avg_rating = sum(r.get("rating", 0) for r in user_ratings) / len(user_ratings)
         db.user.update_one(
             {"_id": user_obj_id},
-            {"$set": {"rating": user_avg_rating}}
+            {"$set": {"avg_rating": user_avg_rating}}  # Use avg_rating instead of rating
+        )
+    
+    # Update product's average rating
+    product_ratings = list(db.ratings.find({"product_id": product_obj_id}))
+    if product_ratings:
+        product_avg_rating = sum(r.get("rating", 0) for r in product_ratings) / len(product_ratings)
+        db.products.update_one(
+            {"_id": product_obj_id},
+            {"$set": {"rating": product_avg_rating}}
+        )
+    else:
+        db.products.update_one(
+            {"_id": product_obj_id},
+            {"$set": {"rating": 0}}
         )
 
     return jsonify({

@@ -80,7 +80,6 @@ export default function ProductDetailsPage() {
       fetchProduct();
     }
   };
-
   const handleSubmitRating = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -104,30 +103,36 @@ export default function ProductDetailsPage() {
     if (response.ok) {
       setUserRating(rating);
       alert("Rating submitted successfully!");
+      // Fetch both product and user data to update the UI properly
       fetchProduct();
+      fetchUserRating();
+    }
+  };
+  const fetchUserRating = async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !productId) return;
+
+    try {
+      const response = await fetch(`${API_URL}/user/${token}`, { cache: "no-store" });
+      const userData = await response.json();
+      
+      if (userData.ratings) {
+        const productRating = userData.ratings.find((r: Rating) => r.product_id === productId);
+        
+        if (productRating) {
+          setUserRating(productRating.rating);
+          setRating(productRating.rating);
+        } else {
+          // Reset to default if no rating found
+          setUserRating(null);
+          setRating(5);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user rating:", error);
     }
   };
 
-  const fetchUserRating = async () => {
-  const token = localStorage.getItem("token");
-  if (!token || !productId) return;
-
-  try {
-    const response = await fetch(`${API_URL}/user/${token}`, { cache: "no-store" });
-    const userData = await response.json();
-    
-    if (userData.ratings) {
-      const productRating = userData.ratings.find((r: Rating) => r.product_id === productId);
-      
-      if (productRating) {
-        setUserRating(productRating.rating);
-        setRating(productRating.rating);
-      }
-    }
-  } catch (error) {
-    console.error("Error fetching user rating:", error);
-  }
-};
 
   const fetchProduct = async () => {
     if (!productId) return;

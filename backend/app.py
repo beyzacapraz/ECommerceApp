@@ -249,7 +249,7 @@ def get_users():
             "username": user.get("username", ""),
             "email": user.get("email", ""),
             "is_admin": user.get("is_admin", False),
-            "avg_rating": user.get("avg_rating", 0)  # Use avg_rating in the response
+            "avg_rating": user.get("avg_rating", 0) 
         })
     return jsonify(users)
 
@@ -431,7 +431,7 @@ def add_rating():
         user_avg_rating = sum(r.get("rating", 0) for r in user_ratings) / len(user_ratings)
         db.user.update_one(
             {"_id": user_obj_id},
-            {"$set": {"avg_rating": user_avg_rating}}  # Use avg_rating instead of rating
+            {"$set": {"avg_rating": user_avg_rating}}
         )
     
     product_ratings = list(db.ratings.find({"product_id": product_obj_id}))

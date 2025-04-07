@@ -24,6 +24,10 @@ interface ProductDetails {
   }[];
 }
 
+interface Rating {
+  product_id: string;
+  rating: number;
+}
 export default function ProductDetailsPage() {
   const [product, setProduct] = useState<ProductDetails | null>(null);
   const [reviewText, setReviewText] = useState("");
@@ -103,27 +107,25 @@ export default function ProductDetailsPage() {
   };
 
   const fetchUserRating = async () => {
-    const token = localStorage.getItem("token");
-    if (!token || !productId) return;
+  const token = localStorage.getItem("token");
+  if (!token || !productId) return;
+
+  try {
+    const response = await fetch(`${API_URL}/user/${token}`, { cache: "no-store" });
+    const userData = await response.json();
     
-    try {
-      const response = await fetch(`${API_URL}/user/${token}`, {cache: 'no-store'});
-      const userData = await response.json();
+    if (userData.ratings) {
+      const productRating = userData.ratings.find((r: Rating) => r.product_id === productId);
       
-      if (userData.ratings) {
-        const productRating = userData.ratings.find(
-          (r: any) => r.product_id === productId
-        );
-        
-        if (productRating) {
-          setUserRating(productRating.rating);
-          setRating(productRating.rating);
-        }
+      if (productRating) {
+        setUserRating(productRating.rating);
+        setRating(productRating.rating);
       }
-    } catch (error) {
-      console.error("Error fetching user rating:", error);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching user rating:", error);
+  }
+};
 
   const fetchProduct = async () => {
     if (!productId) return;

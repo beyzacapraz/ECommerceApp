@@ -42,7 +42,7 @@ This is an eCommerce application designed to provide a seamless shopping experie
 
 ### Programming Language
 I chose **Flask** because I was somewhat familiar with it thanks to my final project group members. The backend of our final project was also built using Flask, so I felt more comfortable using it.  
-However, it turned out to be a difficult choice because I couldn't establish a proper Vercel deployment with Flask.
+However, it turned out to be a difficult choice because I couldn't establish a proper Vercel deployment with Flask first.
 
 I chose **Next.js** for the frontend because my research showed that deploying with Vercel would be much easier using it.
 
@@ -54,12 +54,11 @@ I chose **Next.js** for the frontend because my research showed that deploying w
 ---
 
 ## Vercel URL
-Unfortunately, I do not have a fully working Vercel deployment at the moment, but I am sharing the link anyway. I hope this won’t affect the grading too much:
-
+Because Vercel is primarily for frontend (Next.js) projects. So I could not directly deploy Flask on Vercel. Instead, I have deployed my Flask backend on a backend-friendly service like: Render!
+It gave me a public URL: https://ecommerceapp-3ntu.onrender.com/  and I have set the environment variable in Vercel: Here is the link:
 👉 [https://e-commerce-app-flax-ten.vercel.app/](https://e-commerce-app-flax-ten.vercel.app/)
 
 ## For running application
-Since I didn't have a working deployment URL, I uploaded all the project folders in the submission. You can run the application without any installation by following the steps in the "Activate Backend" and "Activate Frontend" sections below. Thank you!
 
 ### Backend
 - cd backend

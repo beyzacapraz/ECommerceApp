@@ -297,12 +297,12 @@ def delete_product(product_id):
             avg_rating = sum(r.get("rating", 0) for r in remaining_ratings) / len(remaining_ratings)
             db.user.update_one(
                 {"_id": user_id},
-                {"$set": {"rating": avg_rating}}
+                {"$set": {"avg_rating": avg_rating}}
             )
         else:
             db.user.update_one(
                 {"_id": user_id},
-                {"$set": {"rating": 0}}
+                {"$set": {"avg_rating": 0}}
             )
 
     db.products.delete_one({"_id": product_obj_id})

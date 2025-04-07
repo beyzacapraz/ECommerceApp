@@ -109,26 +109,21 @@ export default function ProductDetailsPage() {
   const fetchUserRating = async () => {
     const token = localStorage.getItem("token");
     if (!token || !productId) return;
-
-    try {
-      const response = await fetch(`${API_URL}/user/${token}`, { cache: "no-store" });
-      const userData = await response.json();
+    const response = await fetch(`${API_URL}/user/${token}`, { cache: "no-store" });
+    const userData = await response.json();
+    
+    if (userData.ratings) {
+      const productRating = userData.ratings.find((r: Rating) => r.product_id === productId);
       
-      if (userData.ratings) {
-        const productRating = userData.ratings.find((r: Rating) => r.product_id === productId);
-        
-        if (productRating) {
-          setUserRating(productRating.rating);
-          setRating(productRating.rating);
-        } else {
-          // Reset to default if no rating found
-          setUserRating(null);
-          setRating(5);
-        }
+      if (productRating) {
+        setUserRating(productRating.rating);
+        setRating(productRating.rating);
+      } else {
+        setUserRating(null);
+        setRating(5);
       }
-    } catch (error) {
-      console.error("Error fetching user rating:", error);
     }
+
   };
 
 
@@ -193,7 +188,7 @@ export default function ProductDetailsPage() {
                 <span className="ml-1">/10</span>
                 <button
                   onClick={handleSubmitRating}
-                  className="ml-4 px-3 py-1 bg-blue-500 text-white rounded"
+                  className="ml-4 px-3 py-1 bg-[#c3e5ae] text-black rounded"
                 >
                   {userRating !== null ? "Update Rating" : "Submit Rating"}
                 </button>

@@ -159,7 +159,7 @@ export default function Home() {
                   <span className="font-semibold text-black text-lg">${product.price.toFixed(2)}</span>
                   <div className="flex items-center space-x-1">
                    <span className="text-[#ffa500] text-4xl">★</span>
-                    <span className="text-black font-medium">{product.rating}</span>
+                    <span className="text-black font-medium">{product.rating.toFixed(2)}</span>
                   </div>
                 </div>
 

@@ -36,7 +36,9 @@ export default function ProductDetailsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const productId = searchParams.get('id');
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  // const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+
 
   const handleSubmitReview = async () => {
     const token = localStorage.getItem("token");

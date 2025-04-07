@@ -34,7 +34,9 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  // const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+
 
   useEffect(() => {
     fetch(`${API_URL}/categories`)

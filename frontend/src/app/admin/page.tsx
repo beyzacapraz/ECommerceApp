@@ -63,7 +63,8 @@ export default function AdminPanel() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  // const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
   useEffect(() => {
     fetchData();

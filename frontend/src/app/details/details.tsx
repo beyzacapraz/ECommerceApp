@@ -1,5 +1,4 @@
-"use client";
-
+// ProductDetailsPage.tsx
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './details.module.css';
@@ -17,6 +16,7 @@ interface ProductDetails {
   size?: number[];
   material?: string;
   rating?: number;
+  ratings_count?: number;
   reviews?: {
     text: string;
     username: string;
@@ -28,6 +28,7 @@ export default function ProductDetailsPage() {
   const [product, setProduct] = useState<ProductDetails | null>(null);
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState(5);
+  const [userRating, setUserRating] = useState<number | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const productId = searchParams.get('id');
@@ -35,13 +36,18 @@ export default function ProductDetailsPage() {
 
   const handleSubmitReview = async () => {
     const token = localStorage.getItem("token");
-    const userRes = await fetch(`${API_URL}/user/${token}`,{cache: 'no-store'});
+    if (!token) {
+      alert("You must be logged in to submit a review");
+      return;
+    }
+    
+    const userRes = await fetch(`${API_URL}/user/${token}`, {cache: 'no-store'});
     const userData = await userRes.json();
+    
     const reviewPayload = {
       text: reviewText,
       user_id: token,
       product_id: productId,
-      rating: rating
     };
 
     const response = await fetch(`${API_URL}/add-review`, {
@@ -50,6 +56,7 @@ export default function ProductDetailsPage() {
       body: JSON.stringify(reviewPayload),
       cache: 'no-store'
     });
+    
     if (response.ok) {
       const newReview = {
         text: reviewText,
@@ -61,30 +68,79 @@ export default function ProductDetailsPage() {
         ...prev,
         reviews: [...(prev.reviews || []), newReview]
       });
+      
       setReviewText("");
-      setRating(5);
       alert("Review added successfully!");
       fetchProduct();
     }
   };
 
+  const handleSubmitRating = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("You must be logged in to submit a rating");
+      return;
+    }
+    
+    const ratingPayload = {
+      rating: rating,
+      user_id: token,
+      product_id: productId,
+    };
+
+    const response = await fetch(`${API_URL}/add-rating`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(ratingPayload),
+      cache: 'no-store'
+    });
+    
+    if (response.ok) {
+      setUserRating(rating);
+      alert("Rating submitted successfully!");
+      fetchProduct();
+    }
+  };
+
+  const fetchUserRating = async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !productId) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/user/${token}`, {cache: 'no-store'});
+      const userData = await response.json();
+      
+      if (userData.ratings) {
+        const productRating = userData.ratings.find(
+          (r: any) => r.product_id === productId
+        );
+        
+        if (productRating) {
+          setUserRating(productRating.rating);
+          setRating(productRating.rating);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user rating:", error);
+    }
+  };
+
   const fetchProduct = async () => {
     if (!productId) return;
-    const response = await fetch(`${API_URL}/products/${productId}`,{cache: 'no-store'});
+    const response = await fetch(`${API_URL}/products/${productId}`, {cache: 'no-store'});
     const data = await response.json();
     setProduct(data);
-    
   };
 
   useEffect(() => {
     if (productId) {
       fetchProduct();
+      fetchUserRating();
     }
   }, [productId]);
 
   if (!productId) return <div className="text-center mt-10">Product ID is missing</div>;
   if (!product) return <div className="text-center mt-10">Loading product details...</div>;
-
 
   return (
     <div className={styles.container}>
@@ -111,7 +167,33 @@ export default function ProductDetailsPage() {
                 <p><strong>Available Sizes:</strong> EU {product.size.join(", ")}</p>
               )}
               {product.material && <p><strong>Material:</strong> {product.material}</p>}
-              <p><strong>Rating:</strong> {product.rating?.toFixed(1) || "0.0"}/10</p>
+              <p><strong>Rating:</strong> {product.rating?.toFixed(1) || "0.0"}/10 ({product.ratings_count || 0} ratings)</p>
+            </div>
+
+            <div className="mt-6 border-t pt-4">
+              <h3 className="text-black font-semibold mb-2">Rate This Product</h3>
+              <div className="my-2 text-black">
+                <label className="mr-2 font-medium text-black">Your Rating:</label>
+                <select 
+                  value={rating} 
+                  onChange={(e) => setRating(parseInt(e.target.value))}
+                  className="border rounded p-1"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
+                <span className="ml-1">/10</span>
+                <button
+                  onClick={handleSubmitRating}
+                  className="ml-4 px-3 py-1 bg-blue-500 text-white rounded"
+                >
+                  {userRating !== null ? "Update Rating" : "Submit Rating"}
+                </button>
+                {userRating !== null && (
+                  <p className="text-sm text-gray-600 mt-1">Your current rating: {userRating}/10</p>
+                )}
+              </div>
             </div>
 
             <div className="mt-6 border-t pt-4">
@@ -123,22 +205,9 @@ export default function ProductDetailsPage() {
                 onChange={(e) => setReviewText(e.target.value)}
                 placeholder="Write your review here..."
               />
-              <div className="my-2 text-black">
-                <label className="mr-2 font-medium text-black">Rating:</label>
-                <select 
-                  value={rating} 
-                  onChange={(e) => setRating(parseInt(e.target.value))}
-                  className="border rounded p-1"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
-                    <option key={value} value={value}>{value}</option>
-                  ))}
-                </select>
-                <span className="ml-1">/10</span>
-              </div>
               <button
                 onClick={handleSubmitReview}
-                className="px-4 py-2 bg-[#c3e5ae] text-black  mt-2"
+                className="px-4 py-2 bg-[#c3e5ae] text-black mt-2"
               >
                 Submit Review
               </button>
@@ -173,5 +242,4 @@ export default function ProductDetailsPage() {
       </div>
     </div>
   );
-
 }

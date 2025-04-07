@@ -101,10 +101,13 @@ def login():
         result = db.user.insert_one(new_user)
         return jsonify({"message": "User created and logged in", "token": str(result.inserted_id)})
 
-@app.route("/user/<token>", methods=["GET", "POST"])
+@app.route("/user/<token>", methods=["GET"])
 def get_user(token):
     user_id = ObjectId(token)
     user = db.user.find_one({"_id": user_id})
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
     review_docs = []
     for review_id in user.get("reviews", []):
         review = db.reviews.find_one({"_id": ObjectId(review_id)})
@@ -112,7 +115,19 @@ def get_user(token):
             product = db.products.find_one({"_id": review["product_id"]})
             review_docs.append({
                 "text": review.get("text", ""),
-                "product_name": product["name"] if product else "Unknown Product"
+                "product_name": product["name"] if product else "Unknown Product",
+                "product_id": str(review["product_id"])
+            })
+
+    rating_docs = []
+    for rating_id in user.get("ratings", []):
+        rating = db.ratings.find_one({"_id": ObjectId(rating_id)})
+        if rating:
+            product = db.products.find_one({"_id": rating["product_id"]})
+            rating_docs.append({
+                "rating": rating.get("rating", 0),
+                "product_name": product["name"] if product else "Unknown Product",
+                "product_id": str(rating["product_id"])
             })
 
     return jsonify({
@@ -121,13 +136,17 @@ def get_user(token):
         "email": user.get("email", ""),
         "is_admin": user.get("is_admin", False),
         "rating": user.get("rating", 0),
-        "reviews": review_docs
+        "reviews": review_docs,
+        "ratings": rating_docs
     })
       
 
 @app.route("/products/<product_id>", methods=["GET"])
 def get_product_details(product_id):
     product = db.products.find_one({"_id": ObjectId(product_id)})
+    if not product:
+        return jsonify({"error": "Product not found"}), 404
+        
     category_id = product.get("category_id")
     category_name = "Uncategorized"
     if category_id:
@@ -144,7 +163,8 @@ def get_product_details(product_id):
         "seller": product.get("seller", "Unknown"),
         "rating": product.get("rating", 0),
         "category_name": category_name,
-        "reviews": []
+        "reviews": [],
+        "ratings_count": 0
     }
     if category_name == "GPS Sport Watches":
         product_details["battery_life"] = product.get("battery_life", "")
@@ -155,7 +175,6 @@ def get_product_details(product_id):
         product_details["material"] = product.get("material", "")
     elif category_name == "Antique Furniture":
         product_details["material"] = product.get("material", "")
-
     if "reviews" in product:
         for review_id in product["reviews"]:
             review = db.reviews.find_one({"_id": review_id})
@@ -163,9 +182,10 @@ def get_product_details(product_id):
                 product_details["reviews"].append({
                     "text": review.get("text", ""),
                     "username": review.get("username", "Anonymous"),
-                    "created_at": review.get("created_at", datetime.datetime.utcnow()).isoformat() if review.get("created_at") else None,
-                    "rating": review.get("rating", 0)
+                    "created_at": review.get("created_at", datetime.datetime.utcnow()).isoformat() if review.get("created_at") else None
                 })
+    if "ratings" in product:
+        product_details["ratings_count"] = len(product.get("ratings", []))
         
     return jsonify(product_details)
 
@@ -258,6 +278,14 @@ def delete_product(product_id):
             {"$pull": {"reviews": review["_id"]}}
         )
     db.reviews.delete_many({"product_id": product_obj_id})
+    
+    ratings = db.ratings.find({"product_id": product_obj_id})
+    for rating in ratings:
+        db.user.update_many(
+            {"ratings": rating["_id"]},
+            {"$pull": {"ratings": rating["_id"]}}
+        )
+    db.ratings.delete_many({"product_id": product_obj_id})
     db.products.delete_one({"_id": product_obj_id})
     
     return jsonify({"message": "Product deleted successfully"})
@@ -298,18 +326,94 @@ def users_operations():
 @app.route("/users/<user_id>", methods=["DELETE"])
 def delete_user(user_id):
     user_obj_id = ObjectId(user_id)
+    
     reviews = db.reviews.find({"user_id": user_obj_id})
     for review in reviews:
         db.products.update_many(
             {"reviews": review["_id"]},
             {"$pull": {"reviews": review["_id"]}}
         )
-    
     db.reviews.delete_many({"user_id": user_obj_id})
     
+    ratings = db.ratings.find({"user_id": user_obj_id})
+    for rating in ratings:
+        db.products.update_many(
+            {"ratings": rating["_id"]},
+            {"$pull": {"ratings": rating["_id"]}}
+        )
+        product = db.products.find_one({"_id": rating["product_id"]})
+        if product:
+            product_ratings = list(db.ratings.find({"product_id": rating["product_id"]}))
+            if product_ratings:
+                avg_rating = sum(r.get("rating", 0) for r in product_ratings) / len(product_ratings)
+                db.products.update_one(
+                    {"_id": rating["product_id"]},
+                    {"$set": {"rating": avg_rating}}
+                )
+            else:
+                db.products.update_one(
+                    {"_id": rating["product_id"]},
+                    {"$set": {"rating": 0}}
+                )
+    
+    db.ratings.delete_many({"user_id": user_obj_id})
     db.user.delete_one({"_id": user_obj_id})
     
     return jsonify({"message": "User deleted successfully"})
 
+@app.route("/add-rating", methods=["POST"])
+def add_rating():
+    data = request.json
+    user_id = data.get("user_id")
+    product_id = data.get("product_id")
+    rating_value = data.get("rating", 5)
+    
+    user_obj_id = ObjectId(user_id)
+    product_obj_id = ObjectId(product_id)
+    user = db.user.find_one({"_id": user_obj_id})
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    existing_rating = db.ratings.find_one({
+        "user_id": user_obj_id,
+        "product_id": product_obj_id
+    })
+    
+    if existing_rating:
+        db.ratings.update_one(
+            {"_id": existing_rating["_id"]},
+            {"$set": {"rating": rating_value, "updated_at": datetime.datetime.utcnow()}}
+        )
+        rating_id = existing_rating["_id"]
+    else:
+        rating_doc = {
+            "user_id": user_obj_id,
+            "product_id": product_obj_id,
+            "rating": rating_value,
+            "created_at": datetime.datetime.utcnow()
+        }
+        
+        result = db.ratings.insert_one(rating_doc)
+        rating_id = result.inserted_id
+        db.user.update_one(
+            {"_id": user_obj_id},
+            {"$addToSet": {"ratings": rating_id}}
+        )
+        db.products.update_one(
+            {"_id": product_obj_id},
+            {"$addToSet": {"ratings": rating_id}}
+        )
+    user_ratings = list(db.ratings.find({"user_id": user_obj_id}))
+    if user_ratings:
+        user_avg_rating = sum(rating.get("rating", 0) for rating in user_ratings) / len(user_ratings)
+        db.user.update_one(
+            {"_id": user_obj_id},
+            {"$set": {"rating": user_avg_rating}}
+        )
+
+    return jsonify({
+        "message": "Rating added successfully", 
+        "rating_id": str(rating_id)
+    })
 if __name__ == "__main__":
     app.run(debug=True)

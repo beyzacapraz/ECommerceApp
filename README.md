@@ -59,7 +59,8 @@ Unfortunately, I do not have a fully working Vercel deployment at the moment, bu
 👉 [https://e-commerce-app-flax-ten.vercel.app/](https://e-commerce-app-flax-ten.vercel.app/)
 
 ## For running application
-Because I do not have the deploy url, I wanted to give information about the installation commands:
+Since I didn't have a working deployment URL, I uploaded all the project folders in the submission. You can run the application without any installation by following the steps in the "Activate Backend" and "Activate Frontend" sections below. Thank you!
+
 ### Backend
 - cd backend
 - python -m venv venv
@@ -80,3 +81,4 @@ Because I do not have the deploy url, I wanted to give information about the ins
 ### Activate Frontend 
 - cd frontend
 - npm run dev
+

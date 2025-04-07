@@ -95,9 +95,9 @@ def login():
             "username": username,
             "email": email,
             "password": password,
-            "avg_rating": 0,  # Average rating starts at 0
+            "avg_rating": 0, 
             "reviews": [],
-            "ratings": [],    # Initialize empty ratings array
+            "ratings": [],  
             "is_admin": is_admin
         }
         result = db.user.insert_one(new_user)
@@ -137,9 +137,9 @@ def get_user(token):
         "username": user.get("username", ""),
         "email": user.get("email", ""),
         "is_admin": user.get("is_admin", False),
-        "avg_rating": user.get("avg_rating", 0),  # Average rating
+        "avg_rating": user.get("avg_rating", 0), 
         "reviews": review_docs,
-        "ratings": rating_docs  # Array of rating objects
+        "ratings": rating_docs 
     })
       
 
@@ -318,7 +318,7 @@ def users_operations():
             "username": user.get("username", ""),
             "email": user.get("email", ""),
             "is_admin": user.get("is_admin", False),
-            "avg_rating": user.get("avg_rating", 0)  # Use avg_rating
+            "avg_rating": user.get("avg_rating", 0)
         } for user in users_cursor]
         return jsonify(users)
     
@@ -335,9 +335,9 @@ def users_operations():
             "email": data.get("email"),
             "password": data.get("password"),
             "is_admin": data.get("is_admin", False),
-            "avg_rating": 0,  # Average rating
+            "avg_rating": 0,
             "reviews": [],
-            "ratings": []     # Array of rating IDs
+            "ratings": []  
         }
         result = db.user.insert_one(user)
         user["_id"] = str(result.inserted_id)
@@ -347,7 +347,6 @@ def users_operations():
 def delete_user(user_id):
     user_obj_id = ObjectId(user_id)
     
-    # Handle reviews
     reviews = list(db.reviews.find({"user_id": user_obj_id}))
     for review in reviews:
         db.products.update_many(
@@ -403,14 +402,12 @@ def add_rating():
     })
     
     if existing_rating:
-        # Update existing rating
         db.ratings.update_one(
             {"_id": existing_rating["_id"]},
             {"$set": {"rating": rating_value, "updated_at": datetime.datetime.utcnow()}}
         )
         rating_id = existing_rating["_id"]
     else:
-        # Create new rating
         rating_doc = {
             "user_id": user_obj_id,
             "product_id": product_obj_id,
@@ -429,7 +426,6 @@ def add_rating():
             {"$addToSet": {"ratings": rating_id}}
         )
     
-    # Update user's average rating
     user_ratings = list(db.ratings.find({"user_id": user_obj_id}))
     if user_ratings:
         user_avg_rating = sum(r.get("rating", 0) for r in user_ratings) / len(user_ratings)
@@ -438,7 +434,6 @@ def add_rating():
             {"$set": {"avg_rating": user_avg_rating}}  # Use avg_rating instead of rating
         )
     
-    # Update product's average rating
     product_ratings = list(db.ratings.find({"product_id": product_obj_id}))
     if product_ratings:
         product_avg_rating = sum(r.get("rating", 0) for r in product_ratings) / len(product_ratings)

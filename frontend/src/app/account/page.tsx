@@ -18,8 +18,8 @@ interface Account {
   _id: string;
   username: string;
   email: string;
-  avg_rating?: number;  // Average rating (number)
-  ratings?: Rating[];   // Array of rating objects
+  avg_rating?: number; 
+  ratings?: Rating[]; 
   reviews?: Review[];
   is_admin?: boolean;
 }

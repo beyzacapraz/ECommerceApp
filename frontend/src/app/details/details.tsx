@@ -1,4 +1,3 @@
-// ProductDetailsPage.tsx
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './details.module.css';
@@ -103,7 +102,6 @@ export default function ProductDetailsPage() {
     if (response.ok) {
       setUserRating(rating);
       alert("Rating submitted successfully!");
-      // Fetch both product and user data to update the UI properly
       fetchProduct();
       fetchUserRating();
     }

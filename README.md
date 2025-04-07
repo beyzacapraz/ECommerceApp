@@ -58,23 +58,25 @@ Unfortunately, I do not have a fully working Vercel deployment at the moment, bu
 
 👉 [https://e-commerce-app-flax-ten.vercel.app/](https://e-commerce-app-flax-ten.vercel.app/)
 
-## For running application 
+## For running application
+Because I do not have the deploy url, I wanted to give information about the installation commands:
 ### Backend
-cd backend
-python -m venv venv
-source venv/bin/activate 
-pip install flask pymongo flask-cors python-dotenv
+- cd backend
+- python -m venv venv
+- source venv/bin/activate 
+- pip install flask pymongo flask-cors python-dotenv
 
 ### Activate Backend
-source venv/bin/activate
-python3 app.py
+- cd backend
+- source venv/bin/activate
+- python3 app.py
 
 ### Frontend
-cd frontend
-npm install next react react-dom
-npm install react-icons
-npm install @vercel/fonts
+- cd frontend
+- npm install next react react-dom
+- npm install react-icons
+- npm install @vercel/fonts
 
 ### Activate Frontend 
-cd frontend
-npm run dev
+- cd frontend
+- npm run dev

@@ -18,6 +18,18 @@ interface Product {
   material?: string;
 }
 
+interface NewProduct {
+  name: string;
+  price: number;
+  category_id: string;
+  image: string;
+  description?: string;
+  battery_life?: string;
+  age?: string;
+  size?: string;
+  material?: string;
+}
+
 interface User {
   _id: string;
   username: string;
@@ -35,7 +47,7 @@ export default function AdminPanel() {
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [newProduct, setNewProduct] = useState<Partial<Product>>({
+  const [newProduct, setNewProduct] = useState<NewProduct>({
     name: "",
     price: 0,
     category_id: "",
@@ -49,7 +61,7 @@ export default function AdminPanel() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   useEffect(() => {
     fetchData();
@@ -57,50 +69,51 @@ export default function AdminPanel() {
 
   const fetchData = async () => {
     const [productsRes, categoriesRes, usersRes] = await Promise.all([
-    fetch(`${API_URL}/home`),
-    fetch(`${API_URL}/categories`),
-    fetch(`${API_URL}/users`)
+      fetch(`${API_URL}/home`),
+      fetch(`${API_URL}/categories`),
+      fetch(`${API_URL}/users`),
     ]);
     const [productsData, categoriesData, usersData] = await Promise.all([
-    productsRes.json(),
-    categoriesRes.json(),
-    usersRes.json()
+      productsRes.json(),
+      categoriesRes.json(),
+      usersRes.json(),
     ]);
 
     setProducts(productsData);
     setCategories(categoriesData);
     setUsers(usersData);
-    
   };
 
   const handleAddProduct = async () => {
+    setError("");
+    setSuccess("");
 
-      setError("");
-      setSuccess("");
+    const selectedCategory = categories.find((c) => c._id === newProduct.category_id);
+    const productToSend: NewProduct = {
+      ...newProduct,
+      price: Number(newProduct.price),
+    };
 
-      const selectedCategory = categories.find(c => c._id === newProduct.category_id);
-      const productToSend: any = {
-        ...newProduct,
-        price: Number(newProduct.price),
-      };
-      if (selectedCategory) {
-        switch (selectedCategory.name) {
-          case "GPS Sport Watches":
-            productToSend.battery_life = newProduct.battery_life || "";
-            break;
-          case "Antique Furniture":
-            productToSend.age = newProduct.age || "";
-            productToSend.material = newProduct.material || "";
-            break;
-          case "Running Shoes":
-            productToSend.size = newProduct.size || "";
-            productToSend.material = newProduct.material || "";
-            break;
-          case "Vinyls":
-            productToSend.age = newProduct.age || "";
-            break;
-        }
+    if (selectedCategory) {
+      switch (selectedCategory.name) {
+        case "GPS Sport Watches":
+          productToSend.battery_life = newProduct.battery_life || "";
+          break;
+        case "Antique Furniture":
+          productToSend.age = newProduct.age || "";
+          productToSend.material = newProduct.material || "";
+          break;
+        case "Running Shoes":
+          productToSend.size = newProduct.size || "";
+          productToSend.material = newProduct.material || "";
+          break;
+        case "Vinyls":
+          productToSend.age = newProduct.age || "";
+          break;
       }
+    }
+
+    try {
       const response = await fetch(`${API_URL}/products`, {
         method: "POST",
         headers: {
@@ -108,7 +121,10 @@ export default function AdminPanel() {
         },
         body: JSON.stringify(productToSend),
       });
-      const data = await response.json();
+
+      if (!response.ok) throw new Error("Failed to add product");
+
+      const data: Product = await response.json();
       setProducts([...products, data]);
       setNewProduct({
         name: "",
@@ -118,8 +134,12 @@ export default function AdminPanel() {
         description: "",
       });
       setSuccess("Product added successfully");
-    
+    } catch (err) {
+      setError((err as Error).message);
+    }
   };
+
+
 
   const handleRemoveProduct = async (productId: string) => {
 

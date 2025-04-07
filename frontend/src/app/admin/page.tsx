@@ -169,16 +169,25 @@ export default function AdminPanel() {
     
   };
 
-  const handleRemoveUser = async (userId: string) => {
-      setError("");
-      setSuccess("");
-      const response = await fetch(`${API_URL}/users/${userId}`, {
-        method: "DELETE",
-      });
-      setUsers(users.filter((user) => user._id !== userId));
-      setSuccess("User deleted successfully");
-    
-  };
+const handleRemoveUser = async (userId: string) => {
+  setError("");
+  setSuccess("");
+  try {
+    const response = await fetch(`${API_URL}/users/${userId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete user");
+    }
+
+    setUsers(users.filter((user) => user._id !== userId));
+    setSuccess("User deleted successfully");
+  } catch (err) {
+    setError((err as Error).message);
+  }
+};
+
 
   const renderCategorySpecificFields = () => {
     const selectedCategory = categories.find(c => c._id === newProduct.category_id);

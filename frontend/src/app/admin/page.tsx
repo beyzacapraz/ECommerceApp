@@ -34,6 +34,7 @@ interface User {
   _id: string;
   username: string;
   email: string;
+  password?: string;
   is_admin: boolean;
   rating: number;
 }
@@ -57,6 +58,7 @@ export default function AdminPanel() {
   const [newUser, setNewUser] = useState<Partial<User>>({
     username: "",
     email: "",
+    password: "",
     is_admin: false,
   });
   const [error, setError] = useState("");
@@ -68,6 +70,7 @@ export default function AdminPanel() {
   }, []);
 
   const fetchData = async () => {
+
     const [productsRes, categoriesRes, usersRes] = await Promise.all([
       fetch(`${API_URL}/home`),
       fetch(`${API_URL}/categories`),
@@ -82,6 +85,7 @@ export default function AdminPanel() {
     setProducts(productsData);
     setCategories(categoriesData);
     setUsers(usersData);
+
   };
 
   const handleAddProduct = async () => {
@@ -113,86 +117,81 @@ export default function AdminPanel() {
       }
     }
 
-    try {
-      const response = await fetch(`${API_URL}/products`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(productToSend),
-      });
+    const response = await fetch(`${API_URL}/products`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(productToSend),
+    });
 
-      if (!response.ok) throw new Error("Failed to add product");
+    if (!response.ok) throw new Error("Failed to add product");
 
-      const data: Product = await response.json();
-      setProducts([...products, data]);
-      setNewProduct({
-        name: "",
-        price: 0,
-        category_id: "",
-        image: "",
-        description: "",
-      });
-      setSuccess("Product added successfully");
-    } catch (err) {
-      setError((err as Error).message);
-    }
+    const data: Product = await response.json();
+    setProducts([...products, data]);
+    setNewProduct({
+      name: "",
+      price: 0,
+      category_id: "",
+      image: "",
+      description: "",
+    });
+    setSuccess("Product added successfully");
+
   };
 
-
-
   const handleRemoveProduct = async (productId: string) => {
+    setError("");
+    setSuccess("");
+    const response = await fetch(`${API_URL}/products/${productId}`, {
+      method: "DELETE",
+    });
 
-      setError("");
-      setSuccess("");
-      const response = await fetch(`${API_URL}/products/${productId}`, {
-        method: "DELETE",
-      });
+    if (!response.ok) {
+      throw new Error("Failed to delete product");
+    }
+    setProducts(products.filter((product) => product._id !== productId));
+    setSuccess("Product deleted successfully");
 
-      if (!response.ok) {
-        throw new Error("Failed to delete product");
-      }
-      setProducts(products.filter((product) => product._id !== productId));
-      setSuccess("Product deleted successfully");
-    
   };
 
   const handleAddUser = async () => {
-      setError("");
-      setSuccess("");
+    setError("");
+    setSuccess("");
 
-      if (!newUser.username || !newUser.email) {
-        throw new Error("Username and email are required");
-      }
+    if (!newUser.username || !newUser.email || !newUser.password) {
+      setError("Username, email, and password are required");
+      return;
+    }
 
-      const response = await fetch(`${API_URL}/users`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newUser),
-      });
+    const response = await fetch(`${API_URL}/users`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newUser),
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to add user");
-      }
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to add user");
+    }
 
-      const data = await response.json();
-      setUsers([...users, data]);
-      setNewUser({
-        username: "",
-        email: "",
-        is_admin: false,
-      });
-      setSuccess("User added successfully");
-    
+    const data = await response.json();
+    setUsers([...users, data]);
+    setNewUser({
+      username: "",
+      email: "",
+      password: "",
+      is_admin: false,
+    });
+    setSuccess("User added successfully");
+
   };
 
-const handleRemoveUser = async (userId: string) => {
-  setError("");
-  setSuccess("");
-  try {
+  const handleRemoveUser = async (userId: string) => {
+    setError("");
+    setSuccess("");
     const response = await fetch(`${API_URL}/users/${userId}`, {
       method: "DELETE",
     });
@@ -203,11 +202,7 @@ const handleRemoveUser = async (userId: string) => {
 
     setUsers(users.filter((user) => user._id !== userId));
     setSuccess("User deleted successfully");
-  } catch (err) {
-    setError((err as Error).message);
-  }
-};
-
+  };
 
   const renderCategorySpecificFields = () => {
     const selectedCategory = categories.find(c => c._id === newProduct.category_id);
@@ -281,7 +276,7 @@ const handleRemoveUser = async (userId: string) => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl text-black font-bold mb-8">Admin Panel</h1>
-    {error && (
+      {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
           {error}
         </div>
@@ -330,7 +325,7 @@ const handleRemoveUser = async (userId: string) => {
                   </option>
                 ))}
               </select>
-            {newProduct.category_id && renderCategorySpecificFields()}
+              {newProduct.category_id && renderCategorySpecificFields()}
               
               <input
                 type="text"
@@ -394,6 +389,14 @@ const handleRemoveUser = async (userId: string) => {
                 className="w-full p-2 border rounded text-black"
                 value={newUser.email}
                 onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                required
+              />
+              <input
+                type="password"
+                placeholder="Password*"
+                className="w-full p-2 border rounded text-black"
+                value={newUser.password}
+                onChange={(e) => setNewUser({...newUser, password: e.target.value})}
                 required
               />
               <label className="flex items-center space-x-2">

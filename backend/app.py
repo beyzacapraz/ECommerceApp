@@ -262,19 +262,38 @@ def delete_product(product_id):
     
     return jsonify({"message": "Product deleted successfully"})
 
-@app.route("/users", methods=["POST"])
-def add_user():
-    data = request.json
-    user = {
-        "username": data.get("username"),
-        "email": data.get("email"),
-        "is_admin": data.get("is_admin", False),
-        "rating": 0,
-        "reviews": []
-    }
-    result = db.user.insert_one(user)
-    user["_id"] = str(result.inserted_id)
-    return jsonify(user)
+@app.route("/users", methods=["GET", "POST"])
+def users_operations():
+    if request.method == "GET":
+        users_cursor = db.user.find()
+        users = [{
+            "_id": str(user["_id"]),
+            "username": user.get("username", ""),
+            "email": user.get("email", ""),
+            "is_admin": user.get("is_admin", False),
+            "rating": user.get("rating", 0)
+        } for user in users_cursor]
+        return jsonify(users)
+    
+    elif request.method == "POST":
+        data = request.json
+        if not data.get("username") or not data.get("email") or not data.get("password"):
+            return jsonify({"error": "Username, email, and password are required"}), 400
+        existing_user = db.user.find_one({"email": data.get("email")})
+        if existing_user:
+            return jsonify({"error": "User with this email already exists"}), 409
+            
+        user = {
+            "username": data.get("username"),
+            "email": data.get("email"),
+            "password": data.get("password"),
+            "is_admin": data.get("is_admin", False),
+            "rating": 0,
+            "reviews": []
+        }
+        result = db.user.insert_one(user)
+        user["_id"] = str(result.inserted_id)
+        return jsonify(user)
 
 @app.route("/users/<user_id>", methods=["DELETE"])
 def delete_user(user_id):

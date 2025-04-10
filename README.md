@@ -57,6 +57,8 @@ I chose **Next.js** for the frontend because my research showed that deploying w
 Because Vercel is primarily for frontend (Next.js) projects. So I could not directly deploy Flask on Vercel. Instead, I have deployed my Flask backend on a backend-friendly service like: Render!
 It gave me a public URL: https://ecommerceapp-3ntu.onrender.com/,  and I have set the environment variable in Vercel. You can reach the website from this link:
 
+Because of Render's free web service, each time my server starts again, it can take up to **30 seconds** to get back online!
+
 👉 [https://e-commerce-app-flax-ten.vercel.app/](https://e-commerce-app-flax-ten.vercel.app/)
 
 ## For running the application
